@@ -366,6 +366,7 @@
 										type="color"
 										onchange={automaticRedraw}
 									/>
+									<span>{crochetImageData.colors[i]}</span>
 									<button
 										class="iconButton"
 										onclick={() => {
