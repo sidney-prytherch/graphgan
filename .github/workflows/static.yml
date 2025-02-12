@@ -29,22 +29,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-            node-version: 16.14.0
-            cache: "npm"
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: build
-        env:
-          BASE_PATH: '/${{ github.event.repository.name }}'
-        run: |
-          npm run build
-      - name: Upload Artifacts
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # this should match the `pages` option in your adapter-static options
-          path: '.svelte-kit/'
+          # Upload entire repository
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
