@@ -29,6 +29,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+            node-version: 16.14.0
+            cache: "npm"
 
       - name: Install dependencies
         run: npm install
