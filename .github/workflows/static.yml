@@ -69,12 +69,10 @@ jobs:
         with:
           name: site-build
           path: 'build/'
-          
-      - name: List build directory
-        run: ls -lR build/  # Debugging step to verify files exist
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
         with:
           artifact_name: site-build  # Explicitly set artifact name
+          path: 'build/'
