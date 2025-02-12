@@ -48,6 +48,9 @@ jobs:
       
       - name: Build site
         run: pnpm run build
+
+      - name: Find symlinks or hard links
+        run: find build/ -type l -or -type f -links +1
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
