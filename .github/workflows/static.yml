@@ -49,8 +49,8 @@ jobs:
       - name: Build site
         run: pnpm run build
 
-      - name: Check total size of build
-        run: du -sh build/
+      - name: Fix file permissions
+        run: chmod -R 755 build/
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
