@@ -8,8 +8,12 @@
 	import { KMeans } from './KMeans.svelte';
 	import SimpleCanvas from './SimpleCanvas.svelte';
 
+	let mainColor = $state('#008B8B');
+	let contrastingColor = $state('#dedbaf');
+
 	let canvas: Canvas;
 	let smallCanvas: Canvas;
+	let smallestCanvas: Canvas;
 	let stitchCanvas: StitchCanvas;
 	let averageColorCanvas: StitchCanvas;
 	let kMeansCanvas: SimpleCanvas;
@@ -25,10 +29,11 @@
 	const lastPage = 2;
 	const firstPage = 0;
 
-	let kMeansColorCount: number = $state(5);
+	let kMeansColorCount: number = $state(2);
 	let pixelGroups: PixelGroup[][] | null = $state(null);
 	let pixelData: ImageData | undefined = $state();
 	let smallPixelData: ImageData | undefined = $state();
+	let smallestPixelData: ImageData | undefined = $state();
 	let kMeansPixels: string[][] = $state([[]]);
 	let crochetImageData = $state(new CrochetImage());
 
@@ -39,6 +44,10 @@
 
 	const getSmallPixels = (data: ImageData) => {
 		smallPixelData = data;
+	};
+
+	const getSmallestPixels = (data: ImageData) => {
+		smallestPixelData = data;
 	};
 
 	const nextPage = () => {
@@ -61,8 +70,48 @@
 		createPixelGroups();
 	};
 
-	const createKMeansPixelGroup = () => {
-		if (!smallPixelData) {
+	const updateColorValue = (hex: string, percent: number) => {
+		hex = hex.replace('#', '');
+
+		const num = parseInt(hex, 16);
+
+		const amt = Math.floor(255 * percent);
+
+		const R = (num >> 16) + amt;
+		const B = ((num >> 8) & 0x00ff) + amt;
+		const G = (num & 0x0000ff) + amt;
+
+		const newR = Math.max(Math.min(255, R), 0).toString(16).padStart(2, '0');
+		const newB = Math.max(Math.min(255, B), 0).toString(16).padStart(2, '0');
+		const newG = Math.max(Math.min(255, G), 0).toString(16).padStart(2, '0');
+
+		return `#${newR}${newB}${newG}`;
+	};
+
+	const getContrastingColor = (hex: string) => {
+		hex = hex.replace('#', '');
+
+		const num = parseInt(hex, 16);
+
+		const R = 255 - (num >> 16);
+		const B = 255 - ((num >> 8) & 0x00ff);
+		const G = 255 - (num & 0x0000ff);
+
+		// if the value is relatively light, make it lighter for even more contrast - if dark, darken
+		const valueContrast = 50 * (((R + G + B) / 3 > 255 / 2) ? 1 : -1);
+
+		console.log({valueContrast})
+
+		const newR = Math.max(Math.min(255, R + valueContrast), 0).toString(16).padStart(2, '0');
+		const newB = Math.max(Math.min(255, B + valueContrast), 0).toString(16).padStart(2, '0');
+		const newG = Math.max(Math.min(255, G + valueContrast), 0).toString(16).padStart(2, '0');
+
+		return `#${newR}${newB}${newG}`;
+	};
+
+	const createKMeansPixelGroup = (tempPixelData?: ImageData) => {
+		let pixels = tempPixelData ? tempPixelData : smallPixelData;
+		if (!smallPixelData || !pixels) {
 			return null;
 		}
 
@@ -74,14 +123,14 @@
 		createPixelGroups();
 
 		let kMeans = new KMeans();
-		for (let currentPixelRow = 0; currentPixelRow < smallPixelData.height; currentPixelRow++) {
+		for (let currentPixelRow = 0; currentPixelRow < pixels.height; currentPixelRow++) {
 			let row = [];
-			for (let currentPixel = 0; currentPixel < smallPixelData.width; currentPixel++) {
-				let pixelIndex = smallPixelData.width * 4 * currentPixelRow + 4 * currentPixel;
+			for (let currentPixel = 0; currentPixel < pixels.width; currentPixel++) {
+				let pixelIndex = pixels.width * 4 * currentPixelRow + 4 * currentPixel;
 				row.push({
-					r: smallPixelData.data[pixelIndex],
-					g: smallPixelData.data[pixelIndex + 1],
-					b: smallPixelData.data[pixelIndex + 2]
+					r: pixels.data[pixelIndex],
+					g: pixels.data[pixelIndex + 1],
+					b: pixels.data[pixelIndex + 2]
 				});
 			}
 			pixels2D.push(row);
@@ -158,6 +207,9 @@
 						averageColorCanvas.clear();
 						canvas.updateImage(imageData);
 						smallCanvas.updateImage(imageData);
+						smallestCanvas.updateImage(imageData);
+						createKMeansPixelGroup(smallestPixelData);
+						mainColor = crochetImageData.colors[0];
 					};
 				}
 			};
@@ -165,7 +217,14 @@
 	};
 </script>
 
-<main>
+<main
+	style="--mainColor: {mainColor}; --contrastingColor: {getContrastingColor(
+		mainColor
+	)}; --darkerColor: {updateColorValue(mainColor, -0.3)}; --lighterColor: {updateColorValue(
+		mainColor,
+		0.3
+	)}; --darkestColor: {updateColorValue(mainColor, -0.8)};"
+>
 	<h1>Crochet Site</h1>
 
 	<div class="rowflex">
@@ -355,7 +414,11 @@
 									name="kMeansColorCountInpue"
 									type="number"
 								/>
-								<button onclick={createKMeansPixelGroup}>Find the colors for me!</button>
+								<button
+									onclick={() => {
+										createKMeansPixelGroup();
+									}}>Find the colors for me!</button
+								>
 							</div>
 							{#each crochetImageData.colors as color, i}
 								<div class="colorflex">
@@ -407,6 +470,13 @@
 						{imageData}
 						getPixels={getSmallPixels}
 					/>
+					<Canvas
+						bind:this={smallestCanvas}
+						width={50}
+						height={50}
+						{imageData}
+						getPixels={getSmallestPixels}
+					/>
 				</div>
 				<div class:top-view={page === 0 || canvasView === 0} class:invisible={!imageData}>
 					<h3>Original Image</h3>
@@ -445,27 +515,47 @@
 	* {
 		padding: 8px;
 		margin: 8px;
-		color: #dedbaf;
+		color: var(--contrastingColor);
 		font-family: Roboto;
 		font-weight: bold;
 	}
 
-	button, input, select {
-		background-color: darkcyan;
+	button,
+	input,
+	select {
+		background-color: var(--mainColor);
+		text-shadow: black 1px 1px;
 		border: none;
-		color: #dedbaf;
 		font-weight: 800;
 		font-size: larger;
 		border-radius: 8px;
+		transition: background-color 0.5s ease;
 	}
 
-	input[type="number"] {
+	button {
+		box-shadow: 5px 5px 0px --var(darkestColor);
+		transition: box-shadow 0.5s ease;
+	}
+
+	button:active {
+		box-shadow: 2px 2px 0px --var(darkestColor);
+		transform: translate(2px, 2px);
+		background-color: --var(darkerColor);
+		transition:
+			background-color 0.5s ease,
+			box-shadow 0.5s ease;
+	}
+
+	input[type='number'] {
 		max-width: 100px;
 	}
 
-	button:disabled, input:disabled, select:disabled {
-		background-color: rgb(0, 80, 80);
+	button:disabled,
+	input:disabled,
+	select:disabled {
+		background-color: --var(darkerColor);
 		color: #74725d;
+		transition: background-color 0.5s ease;
 	}
 
 	input {
@@ -477,11 +567,12 @@
 		flex-direction: column;
 		justify-content: flex-start;
 		align-items: center;
-		background: darkcyan;
+		background: var(--mainColor);
+		transition: background-color 0.5s ease;
 		border-image-slice: 10 10 10 10 fill;
 		border-image-width: 50px 50px 50px 50px;
-		border-image-outset: 0px 0px 0px 0px; 
-		border-image-repeat: round round; 
+		border-image-outset: 0px 0px 0px 0px;
+		border-image-repeat: round round;
 		border-image-source: url(/src/routes/waistcoatStitch.svg);
 		max-height: 100vh;
 		height: 100vh;
@@ -490,7 +581,6 @@
 
 	main {
 		margin: 0 !important;
-
 	}
 
 	.colorflex {
@@ -546,8 +636,10 @@
 		max-width: 50%;
 	}
 
-	.options, .imageFlex {
-		scrollbar-color: #dedbaf darkcyan; /* Blue thumb, orange track */
+	.options,
+	.imageFlex {
+		scrollbar-color: var(--contrastingColor) var(--mainColor); /* Blue thumb, orange track */
+		transition: scrollbar-color 0.5s ease;
 	}
 
 	.top-view {
@@ -565,7 +657,8 @@
 		display: flex;
 		justify-content: stretch;
 		/* border: 5px solid purple; */
-		background-color: darkcyan;
+		background-color: var(--mainColor);
+		transition: scrollbar-color 0.5s ease;
 		border-radius: 10px;
 		width: 100%;
 		max-height: 80vh;
@@ -585,7 +678,9 @@
 	.iconButton {
 		border: none;
 		background-color: #00000000;
-		color: #dedbaf;
+		color: var(--contrastingColor);
+		transition: color 0.5s ease;
+		box-shadow: none;
 	}
 
 	.hiddenPageButtons {

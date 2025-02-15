@@ -95,6 +95,13 @@ export class KMeans {
             }
 
             this.pixelsClustered = this.deepClone2DArray(this.pixels2D);
+            console.log(this.clusters[0].pixelCount);
+            setTimeout(() => {
+
+                this.clusters.sort((clusterA, clusterB) => clusterB.pixelCount - clusterA.pixelCount);
+
+            console.log(this.clusters[0].pixelCount);
+            }, 5000)
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     let clusterId = lookupTable[w * y + x];
