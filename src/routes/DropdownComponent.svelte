@@ -44,11 +44,14 @@
 		width: 24px;
 	}
 	.container {
+		background-color: #00000055;
+		border-radius: 10px;
 		padding: 8px;
 		margin: 8px;
 	}
 	button {
+		color: #dedbaf;
 		border: none;
-		background-color: #00000000;
+		background-color: transparent;
 	}
 </style>

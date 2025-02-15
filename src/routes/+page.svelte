@@ -408,20 +408,20 @@
 						getPixels={getSmallPixels}
 					/>
 				</div>
-				<div class:top-view={page === 0 || canvasView === 0}>
-					<p>Original Image</p>
+				<div class:top-view={page === 0 || canvasView === 0} class:invisible={!imageData}>
+					<h3>Original Image</h3>
 					<Canvas {imageData} {getPixels} bind:this={canvas} />
 				</div>
-				<div class:top-view={page === 2 && canvasView === 1}>
-					<p>Estimation of project</p>
+				<div class:top-view={page === 2 && canvasView === 1} class:invisible={!pixelData}>
+					<h3>Estimation of project</h3>
 					<StitchCanvas bind:this={stitchCanvas} />
 				</div>
-				<div class:top-view={page === 2 && canvasView === 2}>
-					<p>Image with averaged colors</p>
+				<div class:top-view={page === 2 && canvasView === 2} class:invisible={!pixelData}>
+					<h3>Image with averaged colors</h3>
 					<StitchCanvas bind:this={averageColorCanvas} colorToSelect={0} />
 				</div>
-				<div class:top-view={page === 2 && canvasView === 3}>
-					<p>Image of K-Means representation</p>
+				<div class:top-view={page === 2 && canvasView === 3} class:invisible={!pixelData}>
+					<h3>Image of K-Means representation</h3>
 					<SimpleCanvas bind:this={kMeansCanvas} pixelData2D={kMeansPixels} />
 				</div>
 			</div>
@@ -440,9 +440,32 @@
 </main>
 
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 	* {
 		padding: 8px;
 		margin: 8px;
+		color: #dedbaf;
+		font-family: Roboto;
+		font-weight: bold;
+	}
+
+	button, input, select {
+		background-color: darkcyan;
+		border: none;
+		color: #dedbaf;
+		font-weight: 800;
+		font-size: larger;
+		border-radius: 8px;
+	}
+
+	input[type="number"] {
+		max-width: 100px;
+	}
+
+	button:disabled, input:disabled, select:disabled {
+		background-color: rgb(0, 80, 80);
+		color: #74725d;
 	}
 
 	input {
@@ -454,7 +477,20 @@
 		flex-direction: column;
 		justify-content: flex-start;
 		align-items: center;
-		background-color: aquamarine;
+		background: darkcyan;
+		border-image-slice: 10 10 10 10 fill;
+		border-image-width: 50px 50px 50px 50px;
+		border-image-outset: 0px 0px 0px 0px; 
+		border-image-repeat: round round; 
+		border-image-source: url(/src/routes/waistcoatStitch.svg);
+		max-height: 100vh;
+		height: 100vh;
+		overflow: hidden !important;
+	}
+
+	main {
+		margin: 0 !important;
+
 	}
 
 	.colorflex {
@@ -487,7 +523,7 @@
 	.options {
 		display: flex;
 		/* border: 5px solid blue; */
-		background-color: #00000022;
+		background-color: #00000055;
 		border-radius: 10px;
 		flex-direction: column;
 		justify-content: flex-start;
@@ -500,7 +536,7 @@
 	.imageFlex {
 		display: flex;
 		/* border: 5px solid red; */
-		background-color: #00000022;
+		background-color: #00000055;
 		border-radius: 10px;
 		flex-grow: 1;
 		flex-direction: row;
@@ -508,6 +544,10 @@
 		overflow-y: auto;
 		flex-wrap: wrap;
 		max-width: 50%;
+	}
+
+	.options, .imageFlex {
+		scrollbar-color: #dedbaf darkcyan; /* Blue thumb, orange track */
 	}
 
 	.top-view {
@@ -525,9 +565,10 @@
 		display: flex;
 		justify-content: stretch;
 		/* border: 5px solid purple; */
-		background-color: #00000022;
+		background-color: darkcyan;
 		border-radius: 10px;
 		width: 100%;
+		max-height: 80vh;
 	}
 
 	.pagebutton {
@@ -544,6 +585,7 @@
 	.iconButton {
 		border: none;
 		background-color: #00000000;
+		color: #dedbaf;
 	}
 
 	.hiddenPageButtons {
